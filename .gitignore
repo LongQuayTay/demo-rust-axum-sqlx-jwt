@@ -1,0 +1,5 @@
+/target
+/.vscode
+/.env
+/.rustc_info.json
+/.CACHEDIR.TAG
