@@ -1,4 +1,3 @@
-use axum::http::StatusCode;
 use bcrypt::verify;
 use chrono::{Duration, Utc};
 use sqlx::{MySql, Pool};
@@ -29,15 +28,8 @@ impl AuthService {
         let user = self.user_repository.find_by_username(pool, request.get_username()).await?;
         let password = user.get_password();
         let verify =  verify(request.get_password(), &password).unwrap();
-        tracing::error!("Verify: {}", verify);
         if !verify {
-            tracing::error!("Err");
-            return Err(  
-                Error {
-                status_code: StatusCode::UNAUTHORIZED,
-                error_code: "ERR".to_string(),
-                error_message: "Wrong password".to_string(),
-            })
+            return Err(Error::UNAUTHORIZED)
         }
 
         let duration = Duration::hours(access_token_duration());

@@ -1,4 +1,3 @@
-use axum::http::StatusCode;
 use sqlx::{MySql, Pool};
 
 use crate::{entity::user::User, utils::error::Error};
@@ -13,15 +12,7 @@ impl UserRepository {
         let row = sqlx::query_as::<_, User>(sql)
             .bind(user_id)
             .fetch_one(pool)
-            .await
-            .map_err(|e| {
-                tracing::error!("Server running on Port: {} ", e);
-                Error {
-                    status_code: StatusCode::INTERNAL_SERVER_ERROR,
-                    error_code: "ERR".to_string(),
-                    error_message: "Something wrong".to_string(),
-                }
-            })?;
+            .await?;
         Ok(row)
     }
 
@@ -41,13 +32,7 @@ impl UserRepository {
             .bind(password)
             .bind(age)
             .execute(pool)
-            .await
-            .map_err(|_| Error {
-                status_code: StatusCode::INTERNAL_SERVER_ERROR,
-                error_code: "ERR".to_string(),
-                error_message: "Something wrong".to_string(),
-            })
-            .unwrap()
+            .await?
             .last_insert_id();
         Ok(id)
     }
@@ -62,12 +47,7 @@ impl UserRepository {
         let row = sqlx::query_as::<_, User>(sql)
             .bind(username)
             .fetch_one(pool)
-            .await
-            .map_err(|_| Error {
-                status_code: StatusCode::INTERNAL_SERVER_ERROR,
-                error_code: "ERR".to_string(),
-                error_message: "Something wrong".to_string(),
-            })?;
+            .await?;
         Ok(row)
     }
 }

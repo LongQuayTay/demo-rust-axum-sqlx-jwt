@@ -2,7 +2,7 @@ use axum::{
     async_trait,
     extract::FromRequestParts,
     headers::{authorization::Bearer, Authorization},
-    http::{request::Parts, StatusCode},
+    http::{request::Parts},
     TypedHeader,
 };
 use chrono::Utc;
@@ -14,7 +14,6 @@ use crate::{
     utils::error::Error, config::access_token_secret
 };
 
-use super::error::AuthError;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -49,21 +48,14 @@ impl Claims {
     pub fn encode_access_token(&self) -> Result<String, Error> {
         let key = EncodingKey::from_secret(access_token_secret().as_bytes());
 
-        let token = encode(&Header::default(), &self, &key)
-        .map_err(|_| {
-            Error {
-                status_code: StatusCode::INTERNAL_SERVER_ERROR,
-                error_code: "ERR".to_string(),
-                error_message: "Something wrong".to_string(),
-            }
-        })?;
+        let token = encode(&Header::default(), &self, &key)?;
         Ok(token)
     }
 }
 
 #[async_trait]
 impl FromRequestParts<GlobalState> for Claims {
-    type Rejection = AuthError;
+    type Rejection = Error;
 
     async fn from_request_parts(
         parts: &mut Parts,
@@ -73,20 +65,22 @@ impl FromRequestParts<GlobalState> for Claims {
         let TypedHeader(Authorization(bearer)) =
             TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, state)
                 .await
-                .map_err(|_| AuthError::InvalidToken)
+                .map_err(|_| Error::UNAUTHORIZED)
                 .unwrap();
 
         let key = DecodingKey::from_secret(access_token_secret().as_bytes());
         // Decode the user data
         let token_data = decode::<Claims>(bearer.token(), &key, &Validation::default())
             .map_err(|_| {
-                AuthError::InvalidToken
+                // AuthError::InvalidToken
+                Error::UNAUTHORIZED
             })?;
         let claims = token_data.claims;
 
         // Check token expired
         if claims.is_token_expired() {
-            return Err(AuthError::ExpiredToken);
+            // return Err(AuthError::ExpiredToken);
+            return Err(Error::UNAUTHORIZED);
         }
 
         Ok(claims)

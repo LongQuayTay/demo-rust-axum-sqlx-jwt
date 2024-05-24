@@ -1,9 +1,7 @@
 use axum::{extract::State, routing::post, Router};
 
 use crate::{
-    dto::auth::{JwtResonse, LoginRequest},
-    utils::error::AuthError,
-    GlobalState,
+    dto::auth::{JwtResonse, LoginRequest}, utils::error::Error, GlobalState
 };
 
 pub fn auth_routes() -> Router<GlobalState> {
@@ -21,11 +19,10 @@ pub fn login() -> Router<GlobalState> {
             pool, auth_service, ..
         }): State<GlobalState>,
         request: LoginRequest,
-    ) -> Result<JwtResonse, AuthError> {
+    ) -> Result<JwtResonse, Error> {
         let response = auth_service
             .login(&*pool, &request)
-            .await
-            .map_err(|_| AuthError::TokenCreation)?;
+            .await?;
         Ok(response)
     }
     Router::new().route("/login", post(login_handler))

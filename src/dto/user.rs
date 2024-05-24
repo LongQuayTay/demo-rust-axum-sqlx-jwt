@@ -64,12 +64,7 @@ impl FromRequest<GlobalState, Body> for CreateUserDto {
     ) -> Result<Self, Self::Rejection> {
 
         let Json(body) = Json::<CreateUserDto>::from_request(req, state)
-            .await
-            .map_err(|_| Error {
-                status_code: StatusCode::BAD_REQUEST,
-                error_code: "ERR004".to_string(),
-                error_message: "Wrong request body".to_string(),
-            })?;
+            .await?;
 
         Ok(body)
     }

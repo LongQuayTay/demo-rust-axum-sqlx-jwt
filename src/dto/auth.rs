@@ -44,13 +44,7 @@ impl FromRequest<GlobalState, Body> for LoginRequest {
     ) -> Result<Self, Self::Rejection> {
 
         let Json(body) = Json::<LoginRequest>::from_request(req, state)
-            .await
-            .map_err(|_| Error {
-                status_code: StatusCode::BAD_REQUEST,
-                error_code: "ERR".to_string(),
-                error_message: "Wrong request body".to_string(),
-            })?;
-
+            .await?;
         Ok(body)
     }
 }
